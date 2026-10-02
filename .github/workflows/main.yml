@@ -36,37 +36,37 @@ jobs:
 
       - name: Login to Azure Container Registry
         run: |
-          az acr login --name $ACR_NAME
+          az acr login --name "$ACR_NAME"
 
       - name: Build Docker image
         run: |
           docker build \
-            -t $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG \
-            -t $ACR_LOGIN_SERVER/$IMAGE_NAME:latest \
+            -t "$ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG" \
+            -t "$ACR_LOGIN_SERVER/$IMAGE_NAME:latest" \
             .
 
       - name: Push Docker image to ACR
         run: |
-          docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG
-          docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:latest
+          docker push "$ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG"
+          docker push "$ACR_LOGIN_SERVER/$IMAGE_NAME:latest"
 
       - name: Deploy to Azure VM
         run: |
           az vm run-command invoke \
-            --resource-group $RESOURCE_GROUP \
-            --name $VM_NAME \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$VM_NAME" \
             --command-id RunShellScript \
             --scripts "
               set -e
 
-              echo 'Logging into ACR using VM managed identity...'
+              echo 'Logging into Azure using VM managed identity...'
               az login --identity
 
-              echo 'Logging into ACR...'
-              az acr login --name $ACR_NAME
+              echo 'Logging into Azure Container Registry...'
+              az acr login --name '$ACR_NAME'
 
               echo 'Pulling new Docker image...'
-              docker pull $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG
+              docker pull '$ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG'
 
               echo 'Stopping old container...'
               docker stop hospitalflow-container || true
@@ -79,8 +79,9 @@ jobs:
                 --restart unless-stopped \
                 --name hospitalflow-container \
                 -p 80:80 \
-                $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG
+                '$ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG'
 
               echo 'Deployment complete!'
+              echo 'Running containers:'
               docker ps
             "
