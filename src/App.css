@@ -1,0 +1,184 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f7fb;
+  color: #1f2937;
+}
+
+.app {
+  min-height: 100vh;
+}
+
+.header {
+  background: #111827;
+  color: white;
+  padding: 25px 7%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h1 {
+  font-size: 28px;
+  margin-bottom: 5px;
+}
+
+.header p {
+  color: #9ca3af;
+}
+
+.status {
+  background: #1f2937;
+  padding: 10px 16px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  background: #22c55e;
+  border-radius: 50%;
+}
+
+.container {
+  width: 86%;
+  max-width: 1200px;
+  margin: 40px auto;
+}
+
+.container > h2 {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.description {
+  color: #6b7280;
+  margin-bottom: 30px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.card {
+  background: white;
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+}
+
+.card h3 {
+  color: #6b7280;
+  margin-bottom: 15px;
+}
+
+.card p {
+  color: #9ca3af;
+}
+
+.number {
+  font-size: 40px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.green {
+  color: #16a34a;
+}
+
+.blue {
+  color: #2563eb;
+}
+
+.purple {
+  color: #9333ea;
+}
+
+.workflow {
+  margin-top: 35px;
+  background: white;
+  padding: 30px;
+  border-radius: 14px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+}
+
+.workflow h2 {
+  margin-bottom: 20px;
+}
+
+.workflow-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.workflow-item:last-child {
+  border-bottom: none;
+}
+
+.workflow-item > div {
+  flex: 1;
+}
+
+.workflow-item p {
+  color: #6b7280;
+  margin-top: 5px;
+}
+
+.badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.processing {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.pending {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+footer {
+  text-align: center;
+  padding: 40px;
+  color: #9ca3af;
+}
+
+@media (max-width: 900px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+}
