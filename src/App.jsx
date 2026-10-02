@@ -6,7 +6,7 @@ function App() {
 
       <header className="header">
         <div>
-          <h1>HospitalFlow AI</h1>
+          <h1>HospitalFlow AI - CI/CD LIVE</h1>
           <p>Hospital Workflow Management System</p>
         </div>
 
@@ -111,7 +111,7 @@ function App() {
         </section>
 
         <footer>
-          HospitalFlow AI - CI/CD v2 • React + Docker + Azure
+          HospitalFlow AI - CI/CD LIVE • React + Docker + Azure
         </footer>
 
       </main>
