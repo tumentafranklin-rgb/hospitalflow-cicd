@@ -1,8 +1,13 @@
 pipeline {
     agent any
 
+    options {
+        disableConcurrentBuilds()
+    }
+
     environment {
         DOCKER_REPO = 'tumenta3322/hospitalflow-cicd'
+        APP_CONTAINER = 'hospitalflow'
     }
 
     stages {
@@ -73,6 +78,97 @@ pipeline {
                 }
             }
         }
+
+        stage('Deploy to EC2') {
+            steps {
+                sh '''
+                    set -e
+
+                    NEW_IMAGE="${DOCKER_REPO}:${BUILD_NUMBER}"
+
+                    echo "========================================="
+                    echo "Deploying: $NEW_IMAGE"
+                    echo "========================================="
+
+                    echo "Pulling image from Docker Hub..."
+                    docker pull "$NEW_IMAGE"
+
+                    OLD_IMAGE=""
+
+                    if docker inspect "$APP_CONTAINER" >/dev/null 2>&1; then
+                        OLD_IMAGE=$(docker inspect \
+                          --format='{{.Config.Image}}' \
+                          "$APP_CONTAINER")
+
+                        echo "Currently running: $OLD_IMAGE"
+                    else
+                        echo "No existing HospitalFlow container found."
+                    fi
+
+                    echo "Stopping current application..."
+
+                    docker rm -f "$APP_CONTAINER" 2>/dev/null || true
+
+                    echo "Starting new application..."
+
+                    docker run -d \
+                      --name "$APP_CONTAINER" \
+                      --restart unless-stopped \
+                      -p 80:80 \
+                      "$NEW_IMAGE"
+
+                    echo "Waiting for application to start..."
+                    sleep 5
+
+                    echo "Testing new deployment..."
+
+                    if docker exec "$APP_CONTAINER" \
+                        wget -qO- http://127.0.0.1:80/ \
+                        > /tmp/hospitalflow-deploy.html \
+                        && grep -qi "<html" /tmp/hospitalflow-deploy.html
+                    then
+                        echo "========================================="
+                        echo "DEPLOYMENT SUCCESSFUL"
+                        echo "Running image: $NEW_IMAGE"
+                        echo "========================================="
+                    else
+                        echo "========================================="
+                        echo "DEPLOYMENT FAILED"
+                        echo "Starting rollback..."
+                        echo "========================================="
+
+                        docker rm -f "$APP_CONTAINER" 2>/dev/null || true
+
+                        if [ -n "$OLD_IMAGE" ]; then
+                            echo "Rolling back to: $OLD_IMAGE"
+
+                            docker run -d \
+                              --name "$APP_CONTAINER" \
+                              --restart unless-stopped \
+                              -p 80:80 \
+                              "$OLD_IMAGE"
+
+                            sleep 5
+
+                            if docker exec "$APP_CONTAINER" \
+                                wget -qO- http://127.0.0.1:80/ \
+                                > /tmp/hospitalflow-rollback.html \
+                                && grep -qi "<html" /tmp/hospitalflow-rollback.html
+                            then
+                                echo "Rollback successful."
+                            else
+                                echo "Rollback failed."
+                                exit 1
+                            fi
+                        else
+                            echo "No previous image available for rollback."
+                        fi
+
+                        exit 1
+                    fi
+                '''
+            }
+        }
     }
 
     post {
@@ -83,11 +179,11 @@ pipeline {
         }
 
         success {
-            echo 'HospitalFlow CI completed successfully!'
+            echo 'HospitalFlow CI/CD completed successfully!'
         }
 
         failure {
-            echo 'HospitalFlow CI failed.'
+            echo 'HospitalFlow CI/CD failed.'
         }
     }
 }
