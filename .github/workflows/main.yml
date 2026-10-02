@@ -1,0 +1,86 @@
+name: HospitalFlow CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ACR_NAME: hospitalflowacr
+  ACR_LOGIN_SERVER: hospitalflowacr-gbcfhxbrhmaheyhv.azurecr.io
+  IMAGE_NAME: hospitalflow
+  VM_NAME: azure1
+  RESOURCE_GROUP: Azurestudent
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Login to Azure with OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to Azure Container Registry
+        run: |
+          az acr login --name $ACR_NAME
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG \
+            -t $ACR_LOGIN_SERVER/$IMAGE_NAME:latest \
+            .
+
+      - name: Push Docker image to ACR
+        run: |
+          docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG
+          docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:latest
+
+      - name: Deploy to Azure VM
+        run: |
+          az vm run-command invoke \
+            --resource-group $RESOURCE_GROUP \
+            --name $VM_NAME \
+            --command-id RunShellScript \
+            --scripts "
+              set -e
+
+              echo 'Logging into ACR using VM managed identity...'
+              az login --identity
+
+              echo 'Logging into ACR...'
+              az acr login --name $ACR_NAME
+
+              echo 'Pulling new Docker image...'
+              docker pull $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG
+
+              echo 'Stopping old container...'
+              docker stop hospitalflow-container || true
+
+              echo 'Removing old container...'
+              docker rm hospitalflow-container || true
+
+              echo 'Starting new container...'
+              docker run -d \
+                --restart unless-stopped \
+                --name hospitalflow-container \
+                -p 80:80 \
+                $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG
+
+              echo 'Deployment complete!'
+              docker ps
+            "
