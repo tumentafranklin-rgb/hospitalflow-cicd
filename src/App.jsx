@@ -111,7 +111,7 @@ function App() {
         </section>
 
         <footer>
-          HospitalFlow AI • React + Docker + Azure
+          HospitalFlow AI - CI/CD • React + Docker + Azure
         </footer>
 
       </main>
